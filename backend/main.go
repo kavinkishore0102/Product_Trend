@@ -59,6 +59,9 @@ func main() {
 	mux.HandleFunc("GET /api/keywords", handlers.SearchKeywords)
 	mux.HandleFunc("GET /api/keywords/{asin}/reverse", handlers.GetReverseASIN)
 
+	// ---- Product Discovery (smart filter + ScraperAPI) ----
+	mux.HandleFunc("GET /api/discover", handlers.DiscoverProducts)
+
 	// ---- Health check ----
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

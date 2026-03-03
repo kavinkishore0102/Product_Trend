@@ -42,6 +42,9 @@ export const api = {
     // GET /api/keywords/:asin/reverse
     getReverseASIN: (asin) => apiFetch(`/keywords/${asin}/reverse`),
 
+    // GET /api/discover?category=&price_min=&price_max=&competition=&revenue_min=&size=
+    discoverProducts: (params) => apiFetch('/discover', params),
+
     // GET /api/health
     health: () => apiFetch('/health'),
 };

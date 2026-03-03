@@ -3,7 +3,7 @@ import { useState } from 'react';
 import {
     LayoutDashboard, Search, TrendingUp, Key, RefreshCw,
     Star, Bell, Settings, LogOut, ChevronLeft, ChevronRight,
-    Zap, User, Menu, X
+    Zap, User, Menu, X, Compass
 } from 'lucide-react';
 import './DashboardLayout.css';
 
@@ -14,6 +14,7 @@ const navItems = [
     { to: '/dashboard/keywords', label: 'Keyword Research', icon: Key },
     { to: '/dashboard/cerebro', label: 'Reverse ASIN', icon: RefreshCw },
     { to: '/dashboard/score', label: 'Product Score', icon: Star },
+    { to: '/dashboard/discover', label: 'Product Discovery', icon: Compass },
 ];
 
 export default function DashboardLayout() {

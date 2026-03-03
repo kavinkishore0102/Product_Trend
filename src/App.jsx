@@ -9,6 +9,7 @@ import KeywordResearch from './pages/KeywordResearch';
 import ReverseAsin from './pages/ReverseAsin';
 import ProductScore from './pages/ProductScore';
 import DashboardHome from './pages/DashboardHome';
+import ProductDiscovery from './pages/ProductDiscovery';
 
 export default function App() {
     return (
@@ -24,6 +25,7 @@ export default function App() {
                     <Route path="keywords" element={<KeywordResearch />} />
                     <Route path="cerebro" element={<ReverseAsin />} />
                     <Route path="score" element={<ProductScore />} />
+                    <Route path="discover" element={<ProductDiscovery />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
