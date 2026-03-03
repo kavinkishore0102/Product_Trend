@@ -62,6 +62,12 @@ func main() {
 	// ---- Product Discovery (smart filter + ScraperAPI) ----
 	mux.HandleFunc("GET /api/discover", handlers.DiscoverProducts)
 
+	// ---- Listing Optimizer ----
+	mux.HandleFunc("POST /api/optimize/listing", handlers.OptimizeListing)
+
+	// ---- Market Tracker ----
+	mux.HandleFunc("GET /api/track/compare", handlers.CompareASINs)
+
 	// ---- Health check ----
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

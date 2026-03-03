@@ -45,6 +45,16 @@ export const api = {
     // GET /api/discover?category=&price_min=&price_max=&competition=&revenue_min=&size=
     discoverProducts: (params) => apiFetch('/discover', params),
 
+    // POST /api/optimize/listing
+    optimizeListing: (body) => fetch(`${BASE}/optimize/listing`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    }).then(r => r.json()),
+
+    // GET /api/track/compare?asins=B01,B02,B03
+    compareASINs: (asins) => apiFetch('/track/compare', { asins: asins.join(',') }),
+
     // GET /api/health
     health: () => apiFetch('/health'),
 };

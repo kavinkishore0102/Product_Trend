@@ -10,6 +10,9 @@ import ReverseAsin from './pages/ReverseAsin';
 import ProductScore from './pages/ProductScore';
 import DashboardHome from './pages/DashboardHome';
 import ProductDiscovery from './pages/ProductDiscovery';
+import ListingOptimizer from './pages/ListingOptimizer';
+import ProfitCalculator from './pages/ProfitCalculator';
+import MarketTracker from './pages/MarketTracker';
 
 export default function App() {
     return (
@@ -26,6 +29,9 @@ export default function App() {
                     <Route path="cerebro" element={<ReverseAsin />} />
                     <Route path="score" element={<ProductScore />} />
                     <Route path="discover" element={<ProductDiscovery />} />
+                    <Route path="optimize" element={<ListingOptimizer />} />
+                    <Route path="profit" element={<ProfitCalculator />} />
+                    <Route path="tracker" element={<MarketTracker />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
