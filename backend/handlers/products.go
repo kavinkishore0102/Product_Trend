@@ -6,8 +6,10 @@ import (
 	"strconv"
 	"strings"
 	"trendspy/backend/data"
+	"trendspy/backend/keepa"
 	"trendspy/backend/models"
 	"trendspy/backend/paapi"
+	"trendspy/backend/scraper"
 )
 
 // writeJSON sends a JSON response with the given status code
@@ -91,7 +93,7 @@ func containsTag(tags []string, q string) bool {
 }
 
 // GetProductByASIN returns a single product.
-// Priority: 1) Seed data  2) PA API (real name/category/price)  3) Synthetic generator
+// Priority: 1) Seed  2) ScraperAPI (real HTML)  3) Keepa  4) PA API  5) Synthetic
 func GetProductByASIN(w http.ResponseWriter, r *http.Request) {
 	asin := strings.ToUpper(strings.TrimSpace(r.PathValue("asin")))
 	if len(asin) < 3 {
@@ -99,16 +101,77 @@ func GetProductByASIN(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 1. Check seed catalog
+	// 1. Seed catalog
 	if p, ok := data.GetProductByASIN(asin); ok {
 		writeJSON(w, http.StatusOK, p)
 		return
 	}
 
-	// 2. Try PA API (only calls Amazon if credentials are configured)
+	// 2. Synthetic base (always generated, overlaid by real data below)
 	product := data.GenerateProductFromASIN(asin)
-	if pd, found := paapi.LookupWithCache(paapi.Cfg, paapi.CfgOK, asin); found {
-		// Overlay real data from Amazon onto the generated base
+
+	// Helper: overlay real data onto product
+	applyScraperData := func(sd scraper.ProductData) {
+		if sd.Title != "" {
+			product.Name = sd.Title
+		}
+		if sd.Brand != "" {
+			product.Brand = sd.Brand
+		}
+		if sd.Category != "" {
+			product.Category = sd.Category
+			product.BSRCategory = sd.Category
+		}
+		if sd.Price > 0 {
+			product.Price = sd.Price
+		}
+		if sd.ImageURL != "" {
+			product.Image = sd.ImageURL
+		}
+		if sd.Rating > 0 {
+			product.Rating = sd.Rating
+		}
+		if sd.Reviews > 0 {
+			product.Reviews = sd.Reviews
+		}
+	}
+
+	// 3. ScraperAPI — best free real-data source
+	if scraper.CfgOK {
+		if sd, err := scraper.Lookup(scraper.Cfg, asin); err == nil && sd.Found {
+			applyScraperData(sd)
+		}
+	} else if keepa.CfgOK {
+		// 4. Keepa fallback
+		if kd, err := keepa.GetProduct(keepa.Cfg, asin); err == nil && kd.Found {
+			if kd.Title != "" {
+				product.Name = kd.Title
+			}
+			if kd.Brand != "" {
+				product.Brand = kd.Brand
+			}
+			if kd.Category != "" {
+				product.Category = kd.Category
+				product.BSRCategory = kd.Category
+			}
+			if kd.Price > 0 {
+				product.Price = kd.Price
+			}
+			if kd.ImageURL != "" {
+				product.Image = kd.ImageURL
+			}
+			if kd.Rating > 0 {
+				product.Rating = kd.Rating
+			}
+			if kd.Reviews > 0 {
+				product.Reviews = kd.Reviews
+			}
+			if kd.BSR > 0 {
+				product.BSR = kd.BSR
+			}
+		}
+	} else if pd, found := paapi.LookupWithCache(paapi.Cfg, paapi.CfgOK, asin); found {
+		// 5. PA API fallback
 		if pd.Title != "" {
 			product.Name = pd.Title
 		}
@@ -130,8 +193,8 @@ func GetProductByASIN(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, product)
 }
 
-// GetProductHistory returns BSR, price, and sales history for a product.
-// Works for any ASIN — unknown ones get deterministic synthetic history.
+// GetProductHistory returns 12-month BSR, price, and sales history.
+// Uses real price from ScraperAPI when available, falls back to synthetic.
 func GetProductHistory(w http.ResponseWriter, r *http.Request) {
 	asin := strings.ToUpper(strings.TrimSpace(r.PathValue("asin")))
 	if len(asin) < 3 {
@@ -139,18 +202,15 @@ func GetProductHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Build a product base (seed → PA API overlay → generator)
 	var product models.Product
 	if p, ok := data.GetProductByASIN(asin); ok {
 		product = *p
 	} else {
 		product = data.GenerateProductFromASIN(asin)
-		if pd, found := paapi.LookupWithCache(paapi.Cfg, paapi.CfgOK, asin); found {
-			if pd.Price > 0 {
-				product.Price = pd.Price
-			}
-			if pd.Category != "" {
-				product.Category = pd.Category
+		// Overlay real price if ScraperAPI is configured
+		if scraper.CfgOK {
+			if sd, err := scraper.Lookup(scraper.Cfg, asin); err == nil && sd.Found && sd.Price > 0 {
+				product.Price = sd.Price
 			}
 		}
 	}

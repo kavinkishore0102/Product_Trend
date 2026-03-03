@@ -91,7 +91,10 @@ export default function TrendHistory() {
                 <>
                     {/* Product Banner */}
                     <div className="glass-card" style={{ padding: '20px 24px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 36 }}>{product.image}</span>
+                        {product.image && product.image.startsWith('http')
+                            ? <img src={product.image} alt={product.name} style={{ width: 72, height: 72, objectFit: 'contain', borderRadius: 10, background: 'rgba(255,255,255,0.05)' }} />
+                            : <span style={{ fontSize: 36 }}>📦</span>
+                        }
                         <div style={{ flex: 1 }}>
                             <h2 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 4 }}>{product.name}</h2>
                             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>

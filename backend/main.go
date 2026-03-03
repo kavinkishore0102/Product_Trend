@@ -5,7 +5,9 @@ import (
 	"log"
 	"net/http"
 	"trendspy/backend/handlers"
+	"trendspy/backend/keepa"
 	"trendspy/backend/paapi"
+	"trendspy/backend/scraper"
 )
 
 // corsMiddleware adds CORS headers to allow the Vite frontend to call the API
@@ -23,18 +25,19 @@ func corsMiddleware(next http.Handler) http.Handler {
 }
 
 func main() {
-	// Initialise Amazon PA API credentials from environment variables
+	// Initialise data sources
 	paapi.Init()
-	if paapi.CfgOK {
-		log.Printf("✅ Amazon PA API configured — marketplace: %s, partner: %s",
-			paapi.Cfg.Marketplace, paapi.Cfg.PartnerTag)
-	} else {
-		log.Printf("⚠️  Amazon PA API not configured — running in synthetic-data mode.")
-		log.Printf("   To enable real product data, set these env vars before starting:")
-		log.Printf("     PAAPI_ACCESS_KEY   — your associate access key")
-		log.Printf("     PAAPI_SECRET_KEY   — your associate secret key")
-		log.Printf("     PAAPI_PARTNER_TAG  — your associate tag (e.g. yourtag-21)")
-		log.Printf("     PAAPI_MARKETPLACE  — marketplace host (default: www.amazon.in)")
+	keepa.Init()
+	scraper.Init()
+	switch {
+	case scraper.CfgOK:
+		log.Printf("✅ ScraperAPI configured — real Amazon product data enabled")
+	case keepa.CfgOK:
+		log.Printf("✅ Keepa API configured — real Amazon data enabled")
+	case paapi.CfgOK:
+		log.Printf("✅ Amazon PA API configured — real product metadata enabled")
+	default:
+		log.Printf("⚠️  No real data source — set SCRAPER_API_KEY to enable real data")
 	}
 
 	mux := http.NewServeMux()
@@ -59,11 +62,16 @@ func main() {
 	// ---- Health check ----
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		paStatus := "unconfigured"
-		if paapi.CfgOK {
-			paStatus = "active"
+		dataSource := "synthetic"
+		switch {
+		case scraper.CfgOK:
+			dataSource = "scraperapi"
+		case keepa.CfgOK:
+			dataSource = "keepa"
+		case paapi.CfgOK:
+			dataSource = "paapi"
 		}
-		fmt.Fprintf(w, `{"status":"ok","service":"TrendSpy API","version":"1.0.0","pa_api":"%s"}`, paStatus)
+		fmt.Fprintf(w, `{"status":"ok","service":"TrendSpy API","version":"1.0.0","data_source":"%s"}`, dataSource)
 	})
 
 	addr := ":8080"

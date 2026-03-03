@@ -32,7 +32,9 @@ export default function ReverseAsin() {
             const data = await api.getReverseASIN(target);
             setKeywords(data.keywords || []);
             setProductName(data.product || target);
-            setProductImage(allProducts.find(p => p.asin === target)?.image || '📦');
+            // Use real image from API response
+            const imgUrl = data.product_image || '';
+            setProductImage(imgUrl || '📦');
             setAsin(target);
         } catch (e) {
             setError(e.message);
@@ -98,7 +100,10 @@ export default function ReverseAsin() {
                 <>
                     {/* Product Banner */}
                     <div className="glass-card" style={{ padding: '16px 24px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 32 }}>{productImage}</span>
+                        {productImage && productImage.startsWith('http')
+                            ? <img src={productImage} alt={productName} style={{ width: 64, height: 64, objectFit: 'contain', borderRadius: 8, background: 'rgba(255,255,255,0.05)' }} />
+                            : <span style={{ fontSize: 32 }}>{productImage || '📦'}</span>
+                        }
                         <div style={{ flex: 1 }}>
                             <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: 4 }}>{productName}</div>
                             <span className="badge badge-purple">{asin}</span>
